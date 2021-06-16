@@ -558,24 +558,17 @@ class VideoInfo(object):
         return {'html': result.text, 'cookies': result.cookies}
 
     @staticmethod
-    def get_player_client(html):
-        context = {}
-
-        found = re.search(
-            r'ytcfg\.set\((?P<context>{"INNERTUBE_CONTEXT":.+?)\)\s*;', html
-        )
-        if found:
-            context = json.loads(found.group('context'))
-
-        return context.get('INNERTUBE_CONTEXT', {}).get('client', {})
+    def get_player_client(config):
+        return config.get('INNERTUBE_CONTEXT', {}).get('client', {})
 
     @staticmethod
     def get_player_config(html):
         config = {}
 
         found = re.search(
-            r'window\.ytplayer\s*=\s*{}\s*;\s*ytcfg\.set\((?P<config>.+?)\)\s*;\s*ytcfg', html
+            r'window\.ytplayer\s*=\s*{}\s*;\s*ytcfg\.set\((?P<config>.+?)\)\s*;\s*(?:ytcfg|var setMessage\s*=\s*)', html
         )
+
         if found:
             config = json.loads(found.group('config'))
 
@@ -703,7 +696,7 @@ class VideoInfo(object):
                     .format(cookies=urllib.parse.quote(''.join(cookies_list)))
 
         player_config = self.get_player_config(html)
-        player_client = self.get_player_client(html)
+        player_client = self.get_player_client(player_config)
 
         http_params = {
             'hl': self.language,
